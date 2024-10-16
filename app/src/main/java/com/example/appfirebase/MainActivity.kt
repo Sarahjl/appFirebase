@@ -10,9 +10,12 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -21,6 +24,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -145,33 +149,49 @@ fun App(db : FirebaseFirestore) {
             Modifier.fillMaxWidth()
         ) {
             Column(
-                Modifier.fillMaxWidth(0.3f)
+                Modifier.fillMaxWidth(0.5f)
             ) {
                 Text(text = "Nome:")
+            }
+            Column(
+                Modifier.fillMaxWidth(0.5f)
+            ) {
+                Text(text = "Telefone:")
             }
         }
 
         Row(
             Modifier.fillMaxWidth()
         ) {
-            Column(
-
-            ) {
-                db.collection("Clientes")
-                    .get()
-                    .addOnSuccessListener { documents ->
-                        for (document in documents) {
-                            val lista = hashMapOf(
-                                "nome" to "${document.data.get("nome")}",
-                                "telefone" to "${document.data.get("telefone")}"
-                            )
-                            Log.d(TAG, "${document.id} => ${document.data}")
+            val clientes = mutableStateListOf<HashMap<String, String>>()
+            db.collection("Clientes")
+                .get()
+                .addOnSuccessListener { documents ->
+                    for (document in documents) {
+                        val lista = hashMapOf(
+                            "nome" to "${document.data.get("nome")}",
+                            "telefone" to "${document.data.get("telefone")}"
+                        )
+                        //Log.d(TAG, "${document.id} => ${document.data}")
+                        clientes.add(lista)
+                    }
+                }
+                .addOnFailureListener { exception ->
+                    Log.w(TAG, "Error getting documents: ", exception)
+                }
+            LazyColumn(modifier = Modifier.fillMaxWidth()) {
+                items(clientes) { cliente ->
+                    Row(modifier = Modifier.fillMaxWidth()) {
+                        Column(modifier = Modifier.weight(0.5f)) {
+                            Text(text = cliente["nome"] ?: "--")
+                        }
+                        Column(modifier = Modifier.weight(0.5f)) {
+                            Text(text = cliente["telefone"] ?: "--")
                         }
                     }
-                    .addOnFailureListener { exception ->
-                        Log.w(TAG, "Error getting documents: ", exception)
-                    }
+                }
             }
         }
     }
+
 }
